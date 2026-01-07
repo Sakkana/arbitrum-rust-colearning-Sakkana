@@ -5,13 +5,13 @@ use alloy::sol;
 
 use ethers::providers::{Provider as EthersProvider, Http};
 use ethers::types::Address as EthAddress;
+use ethers::types::U256;
 use ethers::utils::format_ether;
 use ethers::middleware::Middleware;
 
 use std::error::Error;
 use std::convert::TryFrom;
 use std::env;
-
 
 sol! {
     #[sol(rpc)]
@@ -61,9 +61,37 @@ async fn task_2() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+
+// task 3: 计算 arbitrum gas 费用
+async fn task_3() -> Result<(), Box<dyn Error>> {
+    // Gas Fee = Gas Price × Gas Limit
+
+    // Arbitrum Sepolia RPC
+    let rpc_url = "https://arbitrum-sepolia-rpc.publicnode.com";
+    let provider = EthersProvider::<Http>::try_from(rpc_url)?;
+
+    // 动态获取当前 Gas Price - 单位：wei
+    let gas_price: U256 = provider.get_gas_price().await?;
+    println!("Current Gas Price: {} wei", gas_price);
+
+    // 基础 ETH 转账 Gas Limit（行业通用值）
+    let gas_limit: U256 = U256::from(21_000u64);
+
+    // 3计算 Gas 费用
+    let gas_fee_wei = gas_price * gas_limit;
+    let gas_fee_eth = format_ether(gas_fee_wei);
+
+    println!("Gas Limit (transfer): {}", gas_limit);
+    println!("Estimated Gas Fee: {} wei", gas_fee_wei);
+    println!("Estimated Gas Fee: {} ETH", gas_fee_eth);
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     task_1().await?;
     task_2().await?;
+    task_3().await?;
     Ok(())
 }
