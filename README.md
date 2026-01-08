@@ -63,3 +63,71 @@ cargo run
 4. 结果
 
 ![](images/task1-code-result.png)   
+
+
+## Task 2
+```shell
+export MY_ARB_ADDRESS="0x......"
+```
+
+编写代码：
+```rust
+// task2: 查询自己的余额
+async fn task_2() -> Result<(), Box<dyn Error>> {
+    // arb sepolia rpc
+    let rpc_url = "https://arbitrum-sepolia-rpc.publicnode.com";
+    let provider: EthersProvider<Http> = EthersProvider::<Http>::try_from(rpc_url)?;
+
+    // 查询余额
+    let address_str = env::var("MY_ARB_ADDRESS")?;
+    let address: EthAddress = address_str.parse()?;
+    let balance_wei = provider.get_balance(address, None).await?;
+
+    // wei -> ETH
+    let balance_eth = format_ether(balance_wei);
+    println!("Address: {:?}", address);
+    println!("Balance: {} ETH", balance_eth);
+
+    Ok(())
+}
+```
+
+![](images/task2-balance.png)
+
+
+## task 3
+Gas Fee = Gas Price × Gas Limit
+
+	•	Gas Price：通过 ethers-rs 从 RPC 动态获取
+	•	Gas Limit：ETH 基础转账行业通用值 → 21000
+
+编写代码：
+```rust
+// task 3: 计算 arbitrum gas 费用
+async fn task_3() -> Result<(), Box<dyn Error>> {
+    // Gas Fee = Gas Price × Gas Limit
+
+    // Arbitrum Sepolia RPC
+    let rpc_url = "https://arbitrum-sepolia-rpc.publicnode.com";
+    let provider = EthersProvider::<Http>::try_from(rpc_url)?;
+
+    // 动态获取当前 Gas Price - 单位：wei
+    let gas_price: U256 = provider.get_gas_price().await?;
+    println!("Current Gas Price: {} wei", gas_price);
+
+    // 基础 ETH 转账 Gas Limit（行业通用值）
+    let gas_limit: U256 = U256::from(21_000u64);
+
+    // 3计算 Gas 费用
+    let gas_fee_wei = gas_price * gas_limit;
+    let gas_fee_eth = format_ether(gas_fee_wei);
+
+    println!("Gas Limit (transfer): {}", gas_limit);
+    println!("Estimated Gas Fee: {} wei", gas_fee_wei);
+    println!("Estimated Gas Fee: {} ETH", gas_fee_eth);
+
+    Ok(())
+}
+```
+
+![](images/task3-gas.png)
