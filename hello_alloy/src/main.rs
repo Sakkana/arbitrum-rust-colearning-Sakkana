@@ -16,8 +16,19 @@ use std::error::Error;
 use std::convert::TryFrom;
 use std::env;
 use std::sync::Arc;
+use ethers::abi::Abi;
 use eyre::eyre;
 use eyre::Result;
+
+abigen!(
+    WETH,
+    r#"[
+        function name() view returns (string)
+        function symbol() view returns (string)
+        function decimals() view returns (uint8)
+        function totalSupply() view returns (uint256)
+    ]"#
+);
 
 sol! {
     #[sol(rpc)]
@@ -155,12 +166,43 @@ async fn task_4() -> Result<()> {
     Ok(())
 }
 
+async fn task_5() -> Result<(), Box<dyn Error>> {
+    // 测试网 rpc
+    let rpc_url = "https://arbitrum-sepolia-rpc.publicnode.com";
+    let provider: Provider<Http> = Provider::<Http>::try_from(rpc_url)?
+        .interval(std::time::Duration::from_millis(500));
+
+    let provider = Arc::new(provider);
+
+    // 开源 arb 测试网合约
+    let contract_address: Address = "0x980B62Da83eFf3D4576C647993b0c1D7faf17c73".parse()?;
+
+    // 绑定合约
+    let weth = WETH::new(contract_address, provider);
+
+    // 调用只读方法
+    let name = weth.name().call().await?;
+    let symbol = weth.symbol().call().await?;
+    let decimals = weth.decimals().call().await?;
+    let total_supply = weth.total_supply().call().await?;
+
+    println!("Token name     : {}", name);
+    println!("Token symbol   : {}", symbol);
+    println!("Decimals       : {}", decimals);
+    println!(
+        "Total supply   : {}",
+        ethers::utils::format_units(total_supply, decimals as usize)?
+    );
+
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     task_1().await?;
     task_2().await?;
     task_3().await?;
-    task_4().await?;
+    // task_4().await?;
+    task_5().await?;
     Ok(())
 }

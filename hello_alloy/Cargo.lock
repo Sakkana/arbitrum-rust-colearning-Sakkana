@@ -2501,6 +2501,7 @@ dependencies = [
  "alloy",
  "ethers",
  "eyre",
+ "serde_json",
  "tokio",
 ]
 
